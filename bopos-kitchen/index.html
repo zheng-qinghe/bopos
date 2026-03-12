@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后厨显示屏 - bopos</title>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0f1117; color: #e2e8f0; font-family: -apple-system,'PingFang SC',sans-serif; padding: 16px; }
+.header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #0a0d16; border-radius: 12px; margin-bottom: 16px; border: 1px solid #1e293b; }
+.header-title { font-size: 22px; font-weight: 900; }
+.header-time { font-size: 14px; color: #64748b; }
+.orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.order-card { background: #161b2e; border-radius: 16px; padding: 20px; border: 2px solid #1e293b; position: relative; transition: all 0.3s; }
+.order-card.pending { border-color: #f59e0b; }
+.order-card.cooking { border-color: #6366f1; }
+.order-card.done { border-color: #10b981; opacity: 0.6; }
+.order-card.new-order { animation: flashIn 0.5s ease; }
+@keyframes flashIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.order-table { font-size: 22px; font-weight: 900; color: #f59e0b; }
+.order-time { font-size: 12px; color: #64748b; }
+.order-id { font-size: 11px; color: #334155; margin-bottom: 10px; }
+.item-list { margin-bottom: 14px; }
+.item-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 15px; }
+.item-name { color: #e2e8f0; }
+.item-qty { color: #f59e0b; font-weight: 700; }
+.note-box { background: #0f1117; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 13px; color: #94a3b8; }
+.note-label { color: #f59e0b; font-weight: 600; margin-right: 6px; }
+.btn-row { display: flex; gap: 8px; }
+.btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.btn-cooking { background: #6366f133; color: #6366f1; border: 1px solid #6366f1; }
+.btn-cooking:hover { background: #6366f1; color: #fff; }
+.btn-done { background: #10b98133; color: #10b981; border: 1px solid #10b981; }
+.btn-done:hover { background: #10b981; color: #fff; }
+.status-badge { position: absolute; top: 14px; right: 14px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.status-pending { background: #f59e0b22; color: #f59e0b; }
+.status-cooking { background: #6366f122; color: #6366f1; }
+.status-done { background: #10b98122; color: #10b981; }
+.empty { text-align: center; color: #334155; padding: 80px 0; font-size: 18px; grid-column: 1/-1; }
+.empty-icon { font-size: 64px; display: block; margin-bottom: 16px; }
+.sound-btn { background: #1e293b; border: none; color: #94a3b8; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-title">👨‍🍳 后厨显示屏</div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <button class="sound-btn" onclick="toggleSound()" id="soundBtn">🔔 声音开</button>
+    <div class="header-time" id="clock"></div>
+  </div>
+</div>
+
+<div class="orders-grid" id="ordersGrid">
+  <div class="empty"><span class="empty-icon">🍽️</span>暂无待处理订单</div>
+</div>
+
+<audio id="alertSound" src="https://www.soundjay.com/button/sounds/button-09.mp3" preload="auto"></audio>
+
+<script>
+const BASE_URL = window.BOPOS_SERVER_URL || 'https://noneastern-untelic-nikolai.ngrok-free.dev';
+let orders = [];
+let soundEnabled = true;
+
+// 时钟
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleString('zh-CN');
+}, 1000);
+
+// Socket.io 实时推送
+const socket = io(BASE_URL);
+socket.on('new_order', order => {
+  orders.unshift(order);
+  render();
+  if (soundEnabled) document.getElementById('alertSound').play().catch(()=>{});
+  // 震动提示
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+});
+socket.on('order_updated', updated => {
+  orders = orders.map(o => o.id === updated.id ? updated : o);
+  render();
+});
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundBtn').textContent = soundEnabled ? '🔔 声音开' : '🔕 声音关';
+}
+
+function updateStatus(id, status) {
+  fetch(`${BASE_URL}/api/orders/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    body: JSON.stringify({ status }),
+  });
+}
+
+function render() {
+  const grid = document.getElementById('ordersGrid');
+  const active = orders.filter(o => o.status !== 'done');
+  const done = orders.filter(o => o.status === 'done').slice(0, 3);
+  const all = [...active, ...done];
+
+  if (!all.length) {
+    grid.innerHTML = '<div class="empty"><span class="empty-icon">🍽️</span>暂无待处理订单</div>';
+    return;
+  }
+
+  grid.innerHTML = all.map(o => `
+    <div class="order-card ${o.status} ${o._new ? 'new-order' : ''}" id="card-${o.id}">
+      <span class="status-badge status-${o.status}">
+        ${o.status === 'pending' ? '⏳ 待确认' : o.status === 'cooking' ? '👨‍🍳 制作中' : '✅ 完成'}
+      </span>
+      <div class="order-header">
+        <span class="order-table">${o.table_name}</span>
+        <span class="order-time">${new Date(o.created_at).toLocaleTimeString('zh-CN')}</span>
+      </div>
+      <div class="order-id">${o.id} · ${o.customer_name}</div>
+      <div class="item-list">
+        ${o.items.map(i => `
+          <div class="item-row">
+            <span class="item-name">${i.emoji || ''} ${i.name}</span>
+            <span class="item-qty">×${i.qty}</span>
+          </div>
+        `).join('')}
+      </div>
+      ${o.note ? `<div class="note-box"><span class="note-label">备注:</span>${o.note}</div>` : ''}
+      <div class="btn-row">
+        ${o.status === 'pending' ? `<button class="btn btn-cooking" onclick="updateStatus('${o.id}','cooking')">开始制作</button>` : ''}
+        ${o.status === 'cooking' ? `<button class="btn btn-done" onclick="updateStatus('${o.id}','done')">已完成</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// 初始加载
+fetch(`${BASE_URL}/api/orders?status=pending`, {
+  headers: { 'ngrok-skip-browser-warning': 'true' }
+})
+.then(r => r.json())
+.then(data => {
+  if (data.success) { orders = data.orders; render(); }
+});
+
+// 每30秒刷新一次
+setInterval(() => {
+  fetch(`${BASE_URL}/api/orders`, {
+    headers: { 'ngrok-skip-browser-warning': 'true' }
+  })
+  .then(r => r.json())
+  .then(data => { if (data.success) { orders = data.orders; render(); } });
+}, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<view class="page">
+  <view class="status-card">
+    <text class="status-title">{{statusTip}}</text>
+    <button class="scan-btn" bindtap="handleScan">扫码/登录桌号</button>
+  </view>
+
+  <view class="section">
+    <text class="section-title">菜单</text>
+    <view class="menu-list">
+      <block wx:for="{{menu}}" wx:key="id">
+        <view class="menu-item">
+          <view>
+            <text class="menu-emoji">{{item.emoji}}</text>
+            <text class="menu-name">{{item.name}}</text>
+          </view>
+          <view class="menu-meta">
+            <text class="menu-price">¥{{item.price}}</text>
+            <button class="add-btn" data-id="{{item.id}}" bindtap="addToCart">加入</button>
+          </view>
+        </view>
+      </block>
+      <view wx:if="{{!menu.length && !loadingMenu}}" class="empty">暂无菜单，稍后刷新</view>
+    </view>
+  </view>
+
+  <view class="cart card">
+    <view class="cart-header">
+      <text>购物车</text>
+      <text>共 {{cart.length}} 项</text>
+    </view>
+    <block wx:for="{{cart}}" wx:key="id">
+      <view class="cart-row">
+        <text>{{item.name}} × {{item.qty}}</text>
+        <text>¥{{item.price * item.qty}}</text>
+      </view>
+    </block>
+    <view class="cart-total">
+      <text>合计 ¥{{calcTotal()}}</text>
+      <button class="submit-btn" bindtap="submitOrder">下单并付款</button>
+    </view>
+  </view>
+</view>

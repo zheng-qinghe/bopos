@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "餐饮智慧收银",
+    "slug": "restaurant-pos-rfm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "android": {
+      "package": "com.restaurant.posrfm",
+      "versionCode": 2,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f1117"
+      }
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.restaurant.posrfm"
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f1117"
+    }
+  }
+}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>会员注册 - 餐饮智慧收银</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f1117; color: #e2e8f0; font-family: -apple-system, 'PingFang SC', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+  .logo { text-align: center; margin-bottom: 32px; }
+  .logo-emoji { font-size: 56px; display: block; margin-bottom: 8px; }
+  .logo-title { font-size: 24px; font-weight: 900; }
+  .logo-sub { font-size: 14px; color: #64748b; margin-top: 6px; }
+  .card { background: #161b2e; border: 1px solid #1e293b; border-radius: 20px; padding: 24px; width: 100%; max-width: 400px; }
+  .card-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+  label { display: block; font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+  .input-wrap { display: flex; align-items: center; background: #0f1117; border: 1px solid #1e293b; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+  .input-icon { font-size: 16px; margin-right: 8px; }
+  input { flex: 1; background: none; border: none; outline: none; color: #e2e8f0; font-size: 15px; }
+  input::placeholder { color: #475569; }
+  .error { background: #ef444415; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #ef4444; margin-bottom: 12px; display: none; }
+  .error.show { display: block; }
+  .btn { width: 100%; padding: 15px; border-radius: 14px; border: none; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 4px; }
+  .btn:disabled { background: #334155; color: #64748b; cursor: default; }
+  .benefits { display: flex; justify-content: space-around; margin-top: 28px; width: 100%; max-width: 400px; }
+  .benefit { text-align: center; }
+  .benefit-icon { font-size: 28px; display: block; margin-bottom: 6px; }
+  .benefit-text { font-size: 11px; color: #64748b; }
+  .privacy { font-size: 11px; color: #475569; margin-top: 20px; text-align: center; }
+  /* Success screen */
+  .success { display: none; flex-direction: column; align-items: center; text-align: center; }
+  .success.show { display: flex; }
+  .success-emoji { font-size: 72px; margin-bottom: 16px; }
+  .success-title { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: #64748b; margin-bottom: 28px; }
+  .success-card { background: #161b2e; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; }
+  .success-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1e293b; }
+  .success-row:last-child { border-bottom: none; }
+  .success-label { color: #64748b; font-size: 14px; }
+  .success-val { font-weight: 700; font-size: 14px; }
+  .success-note { font-size: 13px; color: #64748b; margin-top: 20px; line-height: 22px; }
+  .form-section { width: 100%; max-width: 400px; }
+</style>
+</head>
+<body>
+  <div class="logo">
+    <span class="logo-emoji">🍜</span>
+    <div class="logo-title">餐饮智慧会员</div>
+    <div class="logo-sub">填写信息，即可成为我们的会员</div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-section" id="formSection">
+    <div class="card">
+      <div class="card-title">会员注册</div>
+      <label>您的姓名</label>
+      <div class="input-wrap">
+        <span class="input-icon">👤</span>
+        <input id="name" type="text" placeholder="请输入真实姓名" maxlength="10" />
+      </div>
+      <label>手机号码</label>
+      <div class="input-wrap">
+        <span class="input-icon">📱</span>
+        <input id="phone" type="tel" placeholder="请输入手机号" maxlength="11" />
+      </div>
+      <div class="error" id="error"></div>
+      <button class="btn" id="submitBtn" onclick="handleSubmit()">立即注册会员 →</button>
+    </div>
+    <div class="benefits">
+      <div class="benefit"><span class="benefit-icon">🎁</span><span class="benefit-text">专属会员优惠</span></div>
+      <div class="benefit"><span class="benefit-icon">📊</span><span class="benefit-text">消费记录查询</span></div>
+      <div class="benefit"><span class="benefit-icon">🔔</span><span class="benefit-text">活动优先通知</span></div>
+    </div>
+    <div class="privacy">注册即同意会员服务协议与隐私政策</div>
+  </div>
+
+  <!-- Success -->
+  <div class="success" id="successSection">
+    <div class="success-emoji">🎉</div>
+    <div class="success-title">注册成功！</div>
+    <div class="success-sub">欢迎您成为我们的会员</div>
+    <div class="success-card">
+      <div class="success-row">
+        <span class="success-label">姓名</span>
+        <span class="success-val" id="showName"></span>
+      </div>
+      <div class="success-row">
+        <span class="success-label">手机号</span>
+        <span class="success-val" id="showPhone"></span>
+      </div>
+      <div class="success-row">
+        <span class="success-label">注册时间</span>
+        <span class="success-val" id="showTime"></span>
+      </div>
+    </div>
+    <div class="success-note">您的会员信息已登记<br>每次消费可积累积分和优惠</div>
+  </div>
+
+  <script>
+    function handleSubmit() {
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const errorEl = document.getElementById('error');
+      
+      if (!name || name.length < 2) {
+        showError('请输入正确的姓名（至少2个字）'); return;
+      }
+      if (!/^1[3-9]\d{9}$/.test(phone)) {
+        showError('请输入正确的手机号'); return;
+      }
+      
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = '注册中...';
+      
+      // 将注册信息保存到 localStorage（App 扫码后可读取）
+      // 同时也可以通过 URL 参数传递给 App
+      const regData = { name, phone, time: new Date().toISOString(), source: 'qr' };
+      
+      setTimeout(() => {
+        // 显示成功页
+        document.getElementById('formSection').style.display = 'none';
+        const s = document.getElementById('successSection');
+        s.classList.add('show');
+        document.getElementById('showName').textContent = name;
+        document.getElementById('showPhone').textContent = phone;
+        document.getElementById('showTime').textContent = new Date().toLocaleString('zh-CN');
+        
+        // 尝试调用 App 深链接（如果在 App 内置浏览器中打开）
+        const deepLink = `restaurantapp://registered?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
+        window.location.href = deepLink;
+      }, 800);
+    }
+    
+    function showError(msg) {
+      const el = document.getElementById('error');
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+    
+    document.getElementById('name').addEventListener('input', () => {
+      document.getElementById('error').classList.remove('show');
+    });
+    document.getElementById('phone').addEventListener('input', () => {
+      document.getElementById('error').classList.remove('show');
+    });
+  </script>
+</body>
+</html>

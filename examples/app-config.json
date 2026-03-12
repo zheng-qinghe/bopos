@@ -1,0 +1,7 @@
+{
+  "expo": {
+    "extra": {
+      "boposServerUrl": "https://your-public-domain-or-ngrok-url"
+    }
+  }
+}

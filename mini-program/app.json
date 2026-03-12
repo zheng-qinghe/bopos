@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "bopos 微信自助",
+    "navigationBarBackgroundColor": "#0f1117",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0a0d16",
+    "backgroundTextStyle": "light"
+  }
+}
